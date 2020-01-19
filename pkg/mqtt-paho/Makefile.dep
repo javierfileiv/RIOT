@@ -1,0 +1,5 @@
+USEMODULE += xtimer
+USEMODULE += ipv4_addr
+USEMODULE += ipv6_addr
+USEMODULE += mqtt-paho-contrib
+USEMODULE += mqtt-paho-packet

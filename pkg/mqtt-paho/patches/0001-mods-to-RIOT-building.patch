@@ -1,0 +1,20 @@
+From 54b50b97e3b23159808c44311a7ba474909f3e2e Mon Sep 17 00:00:00 2001
+From: Javier FILEIV <javier.fileiv@gmail.com>
+Date: Mon, 21 Oct 2019 13:50:59 +0200
+Subject: [PATCH] mods to RIOT building
+
+
+diff --git a/MQTTClient-C/src/MQTTClient.c b/MQTTClient-C/src/MQTTClient.c
+index bd24dff..4326021 100755
+--- a/MQTTClient-C/src/MQTTClient.c
++++ b/MQTTClient-C/src/MQTTClient.c
+@@ -363,7 +363,7 @@ int MQTTIsConnected(MQTTClient* client)
+   return client->isconnected;
+ }
+ 
+-void MQTTRun(void* parm)
++void *MQTTRun(void* parm)
+ {
+ 	Timer timer;
+ 	MQTTClient* c = (MQTTClient*)parm;
+

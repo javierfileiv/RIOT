@@ -1,0 +1,5 @@
+INCLUDES += -I$(PKGDIRBASE)/mqtt-paho/MQTTClient-C/src/
+INCLUDES += -I$(PKGDIRBASE)/mqtt-paho/MQTTPacket/src
+INCLUDES += -I$(RIOTBASE)/pkg/mqtt-paho/include
+CFLAGS += -DSOCK_HAS_IPV6
+DIRS += $(RIOTBASE)/pkg/mqtt-paho/contrib
