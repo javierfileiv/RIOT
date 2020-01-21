@@ -41,6 +41,7 @@
 
 static MQTTClient client;
 static Network network;
+static bool is_initialized = false;
 static unsigned char buf[BUF_SIZE];
 static unsigned char readbuf[BUF_SIZE];
 
@@ -54,12 +55,6 @@ static unsigned get_qos(const char *str)
         case 2:     return QOS2;
         default:    return QOS0;
     }
-}
-
-static int mqtt_launch_thread(void)
-{
-    printf("Launching MQTT Task\n");
-    return MQTTStartTask(&client);
 }
 
 static void _on_msg_received(MessageData *data)
@@ -83,7 +78,19 @@ static int cmd_con(int argc, char **argv)
     char *remote_ip = argv[1];
     int port = atoi(argv[2]);
 
-    MQTTNetworkInit(&network);
+    /* ensure client isn't connected in case of a new connection */
+    if(client.isconnected) {
+       printf("client already connected, disconnecting it\n");
+       MQTTDisconnect(&client);
+    }
+
+    if(!is_initialized) {
+        MQTTNetworkInit(&network);
+        printf("Launching MQTT Task\n");
+        MQTTStartTask(&client);
+        is_initialized = true;
+    }
+
     printf("Trying to connect to %s , port: %d\n",
            remote_ip, port);
     if (MQTTNetworkConnect(&network, remote_ip, port)) {
@@ -221,7 +228,6 @@ int main(void)
     /* Welcome message */
     printf("Running mqtt paho example. Type help for commands info\n");
 
-    mqtt_launch_thread();
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
     return 0;
