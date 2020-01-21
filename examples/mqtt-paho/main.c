@@ -40,7 +40,7 @@
 #define NOT_RETAINED_MSG        0
 
 static MQTTClient client;
-static Network n;
+static Network network;
 static unsigned char buf[BUF_SIZE];
 static unsigned char readbuf[BUF_SIZE];
 
@@ -83,16 +83,16 @@ static int cmd_con(int argc, char **argv)
     char *remote_ip = argv[1];
     int port = atoi(argv[2]);
 
-    NetworkInit(&n);
+    MQTTNetworkInit(&network);
     printf("Trying to connect to %s , port: %d\n",
            remote_ip, port);
-    if (NetworkConnect(&n, remote_ip, port)) {
+    if (MQTTNetworkConnect(&network, remote_ip, port)) {
         printf("error: Unable to connect to %s:%d\n", remote_ip,
                port);
         return 1;
     }
 
-    MQTTClientInit(&client, &n, COMMAND_TIMEOUT_MS, buf, BUF_SIZE, readbuf,
+    MQTTClientInit(&client, &network, COMMAND_TIMEOUT_MS, buf, BUF_SIZE, readbuf,
                    BUF_SIZE);
 
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
@@ -125,6 +125,8 @@ static int cmd_discon(int argc, char **argv)
     else {
         puts("Disconnect successful");
     }
+
+    MQTTNetworkDisconnect(&network);
     return res;
 }
 

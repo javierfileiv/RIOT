@@ -41,14 +41,14 @@ static int mqtt_close(struct Network *n)
     return 0;
 }
 
-void NetworkInit(Network *n)
+void MQTTNetworkInit(Network *n)
 {
     n->mqttread = mqtt_read;
     n->mqttwrite = mqtt_write;
     n->disconnect = mqtt_close;
 }
 
-int NetworkConnect(Network *n, char *addr_ip, int port)
+int MQTTNetworkConnect(Network *n, char *addr_ip, int port)
 {
     sock_tcp_ep_t remote = SOCK_IPV6_EP_ANY;
     char _local_ip[25];
@@ -75,7 +75,7 @@ int NetworkConnect(Network *n, char *addr_ip, int port)
     return ret;
 }
 
-void NetworkDisconnect(Network *n)
+void MQTTNetworkDisconnect(Network *n)
 {
     sock_tcp_disconnect(&n->sock);
 }
