@@ -81,7 +81,7 @@ static int _cmd_con(int argc, char **argv)
     }
 
     if (!is_initialized) {
-        MQTTNetworkInit(&network);
+        NetworkInit(&network);
         printf("Launching MQTT Task\n");
         MQTTStartTask(&client);
         is_initialized = true;
@@ -89,7 +89,7 @@ static int _cmd_con(int argc, char **argv)
 
     printf("Trying to connect to %s , port: %d\n",
            remote_ip, port);
-    if (MQTTNetworkConnect(&network, remote_ip, port)) {
+    if (NetworkConnect(&network, remote_ip, port) < 0) {
         printf("error: Unable to connect to %s:%d\n", remote_ip,
                port);
         return 1;
@@ -108,7 +108,7 @@ static int _cmd_con(int argc, char **argv)
     printf("Connecting to %s %d\n", remote_ip, port);
 
     int ret = MQTTConnect(&client, &data);
-    if (ret) {
+    if (ret < 0) {
         printf("error: Unable to connect client %d\n", ret);
     }
     else {
@@ -123,14 +123,14 @@ static int _cmd_discon(int argc, char **argv)
     (void)argv;
 
     int res = MQTTDisconnect(&client);
-    if (res) {
+    if (res < 0) {
         puts("error: Unable to disconnect");
     }
     else {
         puts("Disconnect successful");
     }
 
-    MQTTNetworkDisconnect(&network);
+    NetworkDisconnect(&network);
     return res;
 }
 
@@ -153,7 +153,7 @@ static int _cmd_pub(int argc, char **argv)
     message.payloadlen = strlen(message.payload);
 
     int rc;
-    if ((rc = MQTTPublish(&client, argv[1], &message)) != 0) {
+    if ((rc = MQTTPublish(&client, argv[1], &message)) < 0) {
         printf("error: Unable to publish (%d)\n", rc);
     }
     else {
@@ -179,9 +179,9 @@ static int _cmd_sub(int argc, char **argv)
 
     printf("Subscribing to %s\n", argv[1]);
     int ret = MQTTSubscribe(&client, argv[1], qos, _on_msg_received);
-    printf("Subscribed %d\n", ret);
+    printf("Subscribe return value: %d\n", ret);
 
-    if (!ret) {
+    if (ret < 0) {
         printf("error: Unable to subscribe to %s\n", argv[1]);
     }
     else {
@@ -200,11 +200,11 @@ static int _cmd_unsub(int argc, char **argv)
 
     int ret = MQTTUnsubscribe(&client, argv[1]);
 
-    if (!ret) {
-        printf("Unsubscribed from topic:%s\n", argv[1]);
+    if (ret < 0) {
+        printf("error: Unable to unsubscribe from topic: %s\n", argv[1]);
     }
     else {
-        printf("error: Unable to unsubscribe from topic: %s\n", argv[1]);
+        printf("Unsubscribed from topic:%s\n", argv[1]);
 
     }
     return ret;

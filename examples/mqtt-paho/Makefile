@@ -15,7 +15,7 @@ DEVELHELP ?= 1
 QUIET ?= 1
 
 #define to use MQTT Paho as a task using MQTTStartTask()
-CFLAGS += -DMQTT_TASK=1
+CFLAGS += -DMQTT_TASK=1 -O0 -ggdb
 #####################
 USEPKG += mqtt-paho
 USEMODULE += lwip_ipv6

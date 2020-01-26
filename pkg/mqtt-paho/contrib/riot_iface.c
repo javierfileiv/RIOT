@@ -19,6 +19,14 @@
 #include <mqtt.h>
 #include <log.h>
 
+#ifndef MQTT_THREAD_PRIORITY
+#define MQTT_THREAD_PRIORITY    (THREAD_PRIORITY_MAIN - 4)
+#endif
+
+#ifndef MQTT_THREAD_STACKSIZE
+#define MQTT_THREAD_STACKSIZE   (THREAD_STACKSIZE_DEFAULT)
+#endif
+
 #define ENABLE_DEBUG        (0)
 #include "debug.h"
 
@@ -41,14 +49,14 @@ static int mqtt_close(struct Network *n)
     return 0;
 }
 
-void MQTTNetworkInit(Network *n)
+void NetworkInit(Network *n)
 {
     n->mqttread = mqtt_read;
     n->mqttwrite = mqtt_write;
     n->disconnect = mqtt_close;
 }
 
-int MQTTNetworkConnect(Network *n, char *addr_ip, int port)
+int NetworkConnect(Network *n, char *addr_ip, int port)
 {
     sock_tcp_ep_t remote = SOCK_IPV6_EP_ANY;
     char _local_ip[25];
@@ -75,7 +83,7 @@ int MQTTNetworkConnect(Network *n, char *addr_ip, int port)
     return ret;
 }
 
-void MQTTNetworkDisconnect(Network *n)
+void NetworkDisconnect(Network *n)
 {
     sock_tcp_disconnect(&n->sock);
 }
@@ -87,14 +95,16 @@ void TimerInit(Timer *timer)
 
 char TimerIsExpired(Timer *timer)
 {
-    int64_t diff = timer->timeout.ticks64 - xtimer_now64().ticks64;
+    uint64_t ref = xtimer_now64().ticks64;
+    int64_t diff = timer->timeout.ticks64 - ref;
 
     return (diff > 0) ? 0 : 1;
 }
 
 void TimerCountdownMS(Timer *timer, unsigned int timeout_ms)
 {
-    timer->timeout.ticks64 = xtimer_now64().ticks64 + (timeout_ms * US_PER_MS);
+    uint64_t ref = xtimer_now64().ticks64;
+    timer->timeout.ticks64 = ref + (timeout_ms * US_PER_MS);
 }
 
 void TimerCountdown(Timer *timer, unsigned int timeout_s)
@@ -104,7 +114,8 @@ void TimerCountdown(Timer *timer, unsigned int timeout_s)
 
 int TimerLeftMS(Timer *timer)
 {
-    int64_t diff = timer->timeout.ticks64 - xtimer_now64().ticks64;
+    uint64_t ref = xtimer_now64().ticks64;
+    int64_t diff = timer->timeout.ticks64 - ref;
 
     return ((diff < 0) ? 0 : diff / US_PER_MS);
 }
@@ -129,8 +140,8 @@ int MutexUnlock(Mutex *mutex)
 int ThreadStart(Thread *thread, void *(*fn)(void *), void *arg)
 {
     thread->pid = thread_create(thread->stack, sizeof(thread->stack),
-                                THREAD_PRIORITY_IDLE - 1,
-                                THREAD_CREATE_STACKTEST, fn, arg,
+                                MQTT_THREAD_PRIORITY,
+                                MQTT_THREAD_STACKSIZE, fn, arg,
                                 "mqtt_paho_riot");
     return thread->pid;
 }

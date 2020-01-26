@@ -93,7 +93,7 @@ typedef struct Network
  *
  * @param   n   network struct
  */
-void MQTTNetworkInit(Network* n);
+void NetworkInit(Network* n);
 
 /**
  * @brief  Connect network to host
@@ -104,14 +104,14 @@ void MQTTNetworkInit(Network* n);
  *
  * @return  0 if success, !=0 otherwise
  */
-int MQTTNetworkConnect(Network* n, char* address_ip, int port_number);
+int NetworkConnect(Network* n, char* address_ip, int port_number);
 
 /**
  * @brief  Disconnect network
  *
  * @param   n       network struct
  */
-void MQTTNetworkDisconnect(Network* n);
+void NetworkDisconnect(Network* n);
 
 /**
  * @brief  Mutex struct within mqtt paho
