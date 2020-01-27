@@ -7,7 +7,7 @@
  *
  */
 /**
- * @ingroup     pkg_mqtt-paho
+ * @ingroup     pkg_paho-mqtt
  * @{
  *
  * @file
@@ -26,6 +26,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifndef MQTT_THREAD_PRIORITY
+#define MQTT_THREAD_PRIORITY    (THREAD_PRIORITY_MAIN - 4)
+#endif
+
+#ifndef MQTT_THREAD_STACKSIZE
+#define MQTT_THREAD_STACKSIZE   (THREAD_STACKSIZE_DEFAULT)
+#endif
+
 /**
  * @brief  struct to get time references within mqtt paho
  *
@@ -151,7 +160,7 @@ int MutexUnlock(Mutex* mutex);
  */
 typedef struct Thread
 {
-    char stack[THREAD_STACKSIZE_MEDIUM];    /**< stack variable for MQTT thread*/
+    char stack[MQTT_THREAD_STACKSIZE];      /**< stack variable for MQTT thread*/
     kernel_pid_t pid;                       /**< MQTT thread pid*/
 } Thread;
 

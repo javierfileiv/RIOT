@@ -1,4 +1,4 @@
-APPLICATION = mqtt-paho-example
+APPLICATION = paho-mqtt-example
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
@@ -14,10 +14,8 @@ DEVELHELP ?= 1
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 
-#define to use MQTT Paho as a task using MQTTStartTask()
-CFLAGS += -DMQTT_TASK=1 -O0 -ggdb
 #####################
-USEPKG += mqtt-paho
+USEPKG += paho-mqtt
 USEMODULE += lwip_ipv6
 USEMODULE += lwip_ipv6_autoconfig
 # including lwip_ipv6_mld would currently break this test on at86rf2xx radios
@@ -26,6 +24,9 @@ USEMODULE += lwip_tcp lwip_sock_tcp
 USEMODULE += inet_csum
 USEMODULE += shell
 USEMODULE += od
+USEMODULE += shell
+USEMODULE += shell_commands
+USEMODULE += ps
 USEMODULE += netdev_default
 
 CFLAGS += -DSO_REUSE

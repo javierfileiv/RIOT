@@ -19,14 +19,6 @@
 #include <mqtt.h>
 #include <log.h>
 
-#ifndef MQTT_THREAD_PRIORITY
-#define MQTT_THREAD_PRIORITY    (THREAD_PRIORITY_MAIN - 4)
-#endif
-
-#ifndef MQTT_THREAD_STACKSIZE
-#define MQTT_THREAD_STACKSIZE   (THREAD_STACKSIZE_DEFAULT)
-#endif
-
 #define ENABLE_DEBUG        (0)
 #include "debug.h"
 
@@ -78,7 +70,7 @@ int NetworkConnect(Network *n, char *addr_ip, int port)
 
     int ret = sock_tcp_connect(&n->sock, &remote, 0, 0);
     if (ret < 0) {
-        LOG_ERROR("mqtt-paho: unable to connect (%d)\n", ret);
+        LOG_ERROR("paho-mqtt: unable to connect (%d)\n", ret);
     }
     return ret;
 }
@@ -141,7 +133,7 @@ int ThreadStart(Thread *thread, void *(*fn)(void *), void *arg)
 {
     thread->pid = thread_create(thread->stack, sizeof(thread->stack),
                                 MQTT_THREAD_PRIORITY,
-                                MQTT_THREAD_STACKSIZE, fn, arg,
-                                "mqtt_paho_riot");
+                                THREAD_CREATE_STACKTEST, fn, arg,
+                                "paho_mqtt_riot");
     return thread->pid;
 }

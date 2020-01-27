@@ -11,7 +11,7 @@
  * @{
  *
  * @file
- * @brief       MQTT-paho example
+ * @brief       Paho MQTT example
  *
  * @author      Javier FILEIV <javier.fileiv@gmail.com>
  *
@@ -55,7 +55,7 @@ static unsigned get_qos(const char *str)
 
 static void _on_msg_received(MessageData *data)
 {
-    printf("mqtt_paho_example: message received on topic"
+    printf("paho_mqtt_example: message received on topic"
            " %.*s: %.*s\n\n",
            (int)data->topicName->lenstring.len,
            data->topicName->lenstring.data, (int)data->message->payloadlen,

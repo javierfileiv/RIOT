@@ -1,5 +1,5 @@
 USEMODULE += xtimer
 USEMODULE += ipv4_addr
 USEMODULE += ipv6_addr
-USEMODULE += mqtt-paho-contrib
-USEMODULE += mqtt-paho-packet
+USEMODULE += paho-mqtt-contrib
+USEMODULE += paho-mqtt-packet

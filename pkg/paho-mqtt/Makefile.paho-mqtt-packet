@@ -1,4 +1,4 @@
-MODULE = mqtt-paho-packet
+MODULE = paho-mqtt-packet
 
 CFLAGS += -Wno-unused-parameter
 
