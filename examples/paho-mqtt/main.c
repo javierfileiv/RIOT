@@ -29,11 +29,15 @@
 
 #include "MQTTClient.h"
 
-#define BUF_SIZE                250
-#define MQTT_VERSION            3
-#define COMMAND_TIMEOUT_MS      1000
-#define IS_CLEAN_SESSION        1
-#define NOT_RETAINED_MSG        0
+#define BUF_SIZE                        250
+#define MQTT_VERSION                    3
+#define COMMAND_TIMEOUT_MS              3000
+#define DEFAULT_KEEPALIVE_TIMEOUT       9000
+#define DEFAULT_CLIENTID                "riotID"
+#define DEFAULT_USER                    "riot"
+#define DEFAULT_PASSWORD                "pass"
+#define IS_CLEAN_SESSION                1
+#define NOT_RETAINED_MSG                0
 
 static MQTTClient client;
 static Network network;
@@ -64,50 +68,76 @@ static void _on_msg_received(MessageData *data)
 
 static int _cmd_con(int argc, char **argv)
 {
-    if (argc < 7) {
+    if (argc < 3) {
         printf(
-            "usage: %s <ipv6 addr> <port> <clientid> <user> <password> <KeepAliveInterval in sec>\n",
+            "usage: %s <ipv6 addr> <port> [KeepAliveInterval in sec] [user] [user ID] [password] \n",
             argv[0]);
         return 1;
     }
 
     char *remote_ip = argv[1];
     int port = atoi(argv[2]);
-
-    /* ensure client isn't connected in case of a new connection */
-    if (client.isconnected) {
-       printf("client already connected, disconnecting it\n");
-       MQTTDisconnect(&client);
-    }
+    int ret = -1;
 
     if (!is_initialized) {
         NetworkInit(&network);
+        MQTTClientInit(&client, &network, COMMAND_TIMEOUT_MS, buf, BUF_SIZE,
+                       readbuf,
+                       BUF_SIZE);
         printf("Launching MQTT Task\n");
         MQTTStartTask(&client);
         is_initialized = true;
     }
 
+    /* ensure client isn't connected in case of a new connection */
+    if (client.isconnected) {
+        printf("client already connected, disconnecting it\n");
+        MQTTDisconnect(&client);
+    }
+
     printf("Trying to connect to %s , port: %d\n",
            remote_ip, port);
     if (NetworkConnect(&network, remote_ip, port) < 0) {
-        printf("error: Unable to connect to %s:%d\n", remote_ip,
-               port);
+        printf("error: Unable to connect\n");
         return 1;
     }
 
-    MQTTClientInit(&client, &network, COMMAND_TIMEOUT_MS, buf, BUF_SIZE, readbuf,
-                   BUF_SIZE);
-
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     data.MQTTVersion = MQTT_VERSION;
-    data.clientID.cstring = argv[3];
-    data.username.cstring = argv[4];
-    data.password.cstring = argv[5];
-    data.keepAliveInterval = atoi(argv[6]);
+    if (argc > 3) {
+        data.keepAliveInterval = atoi(argv[3]);
+    }
+    else {
+        data.keepAliveInterval = DEFAULT_KEEPALIVE_TIMEOUT;
+    }
+    if (argc > 4) {
+        data.username.cstring = argv[4];
+    }
+    else {
+        data.username.cstring = DEFAULT_USER;
+    }
+
+    if (argc > 5) {
+        data.clientID.cstring = argv[5];
+    }
+    else {
+        data.clientID.cstring = DEFAULT_CLIENTID;
+    }
+
+    if (argc > 6) {
+        data.password.cstring = argv[6];
+    }
+    else {
+        data.password.cstring = DEFAULT_PASSWORD;
+    }
     data.cleansession = IS_CLEAN_SESSION;
+    data.willFlag = 0;
+
     printf("Connecting to %s %d\n", remote_ip, port);
 
-    int ret = MQTTConnect(&client, &data);
+    printf("user:%s clientId:%s password:%s\n", data.username.cstring,
+           data.clientID.cstring, data.password.cstring);
+    ret = MQTTConnect(&client, &data);
     if (ret < 0) {
         printf("error: Unable to connect client %d\n", ret);
     }

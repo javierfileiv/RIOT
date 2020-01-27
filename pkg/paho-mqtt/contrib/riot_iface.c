@@ -56,12 +56,12 @@ int NetworkConnect(Network *n, char *addr_ip, int port)
     strncpy(_local_ip, addr_ip, sizeof(_local_ip));
     remote.family = AF_INET6;
     if (ipv6_addr_from_str((ipv6_addr_t *)&remote.addr, _local_ip) == NULL) {
-        puts("Error IPv6: unable to parse destination address, trying IPv4");
+        LOG_WARNING("Error IPv6: unable to parse destination address, trying IPv4");
         /* ipv6_addr_from_str modifies the buffer */
         strncpy(_local_ip, addr_ip, sizeof(_local_ip));
         if (ipv4_addr_from_str((ipv4_addr_t *)&remote.addr,
                                _local_ip) == NULL) {
-            puts("Error IPv4: unable to parse destination address");
+            LOG_ERROR("Error IPv4: unable to parse destination address");
             return -1;
         }
         remote.family = AF_INET;
