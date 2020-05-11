@@ -82,21 +82,19 @@ void NetworkDisconnect(Network *n)
 
 void TimerInit(Timer *timer)
 {
-    timer->timeout.ticks64 = 0;
+    timer->now.ticks32 = 0;
+    timer->ticks_timeout.ticks32 = 0;
 }
 
 char TimerIsExpired(Timer *timer)
 {
-    uint64_t ref = xtimer_now64().ticks64;
-    int64_t diff = timer->timeout.ticks64 - ref;
-
-    return (diff > 0) ? 0 : 1;
+	return (TimerLeftMS(timer) == 0);
 }
 
 void TimerCountdownMS(Timer *timer, unsigned int timeout_ms)
 {
-    uint64_t ref = xtimer_now64().ticks64;
-    timer->timeout.ticks64 = ref + (timeout_ms * US_PER_MS);
+    timer->now = xtimer_now();
+    timer->ticks_timeout = xtimer_ticks_from_usec(timeout_ms * US_PER_MS);
 }
 
 void TimerCountdown(Timer *timer, unsigned int timeout_s)
@@ -106,10 +104,11 @@ void TimerCountdown(Timer *timer, unsigned int timeout_s)
 
 int TimerLeftMS(Timer *timer)
 {
-    uint64_t ref = xtimer_now64().ticks64;
-    int64_t diff = timer->timeout.ticks64 - ref;
-
-    return ((diff < 0) ? 0 : diff / US_PER_MS);
+	xtimer_ticks32_t diff_ticks = xtimer_diff(xtimer_now(), timer->now);
+    if (xtimer_less(diff_ticks ,timer->ticks_timeout)) {
+    	return (xtimer_usec_from_ticks(xtimer_diff(timer->ticks_timeout, diff_ticks)) / US_PER_MS);
+    }
+	return 0;
 }
 
 void MutexInit(Mutex *mutex)
@@ -133,7 +132,7 @@ int ThreadStart(Thread *thread, void *(*fn)(void *), void *arg)
 {
     thread->pid = thread_create(thread->stack, sizeof(thread->stack),
                                 MQTT_THREAD_PRIORITY,
-                                THREAD_CREATE_STACKTEST, fn, arg,
+                                THREAD_CREATE_WOUT_YIELD, fn, arg,
                                 "paho_mqtt_riot");
     return thread->pid;
 }

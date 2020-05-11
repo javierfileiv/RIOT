@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include "msg.h"
+#include "xtimer.h"
 #include "shell.h"
 #include "lwip/netif.h"
 #include "lwip.h"
@@ -32,7 +32,8 @@
 #define BUF_SIZE                        250
 #define MQTT_VERSION                    3
 #define COMMAND_TIMEOUT_MS              3000
-#define DEFAULT_KEEPALIVE_TIMEOUT       9000
+#define DEFAULT_KEEPALIVE_TIMEOUT       4
+#define DEFAULT_MQTT_PORT				1883
 #define DEFAULT_CLIENTID                "riotID"
 #define DEFAULT_USER                    "riot"
 #define DEFAULT_PASSWORD                "pass"
@@ -41,7 +42,6 @@
 
 static MQTTClient client;
 static Network network;
-static bool is_initialized = false;
 static unsigned char buf[BUF_SIZE];
 static unsigned char readbuf[BUF_SIZE];
 
@@ -68,31 +68,26 @@ static void _on_msg_received(MessageData *data)
 
 static int _cmd_con(int argc, char **argv)
 {
-    if (argc < 3) {
+    if (argc < 2) {
         printf(
-            "usage: %s <ipv6 addr> <port> [KeepAliveInterval in sec] [user] [user ID] [password] \n",
+            "usage: %s <ipv6 addr> [port] [KeepAliveInterval in sec] [user] [user ID] [password] \n",
             argv[0]);
         return 1;
     }
 
     char *remote_ip = argv[1];
-    int port = atoi(argv[2]);
-    int ret = -1;
 
-    if (!is_initialized) {
-        NetworkInit(&network);
-        MQTTClientInit(&client, &network, COMMAND_TIMEOUT_MS, buf, BUF_SIZE,
-                       readbuf,
-                       BUF_SIZE);
-        printf("Launching MQTT Task\n");
-        MQTTStartTask(&client);
-        is_initialized = true;
-    }
+    int ret = -1;
 
     /* ensure client isn't connected in case of a new connection */
     if (client.isconnected) {
         printf("client already connected, disconnecting it\n");
         MQTTDisconnect(&client);
+    }
+
+    int port = DEFAULT_MQTT_PORT;
+    if (argc > 3) {
+        port = atoi(argv[2]);
     }
 
     printf("Trying to connect to %s , port: %d\n",
@@ -102,34 +97,31 @@ static int _cmd_con(int argc, char **argv)
         return 1;
     }
 
+    MQTTStartTask(&client);
+
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     data.MQTTVersion = MQTT_VERSION;
+    data.keepAliveInterval = DEFAULT_KEEPALIVE_TIMEOUT;
+
     if (argc > 3) {
         data.keepAliveInterval = atoi(argv[3]);
     }
-    else {
-        data.keepAliveInterval = DEFAULT_KEEPALIVE_TIMEOUT;
-    }
+
+    data.username.cstring = DEFAULT_USER;
     if (argc > 4) {
         data.username.cstring = argv[4];
     }
-    else {
-        data.username.cstring = DEFAULT_USER;
-    }
 
+    data.clientID.cstring = DEFAULT_CLIENTID;
     if (argc > 5) {
         data.clientID.cstring = argv[5];
     }
-    else {
-        data.clientID.cstring = DEFAULT_CLIENTID;
-    }
 
+    data.password.cstring = DEFAULT_PASSWORD;
     if (argc > 6) {
         data.password.cstring = argv[6];
     }
-    else {
-        data.password.cstring = DEFAULT_PASSWORD;
-    }
+
     data.cleansession = IS_CLEAN_SESSION;
     data.willFlag = 0;
 
@@ -253,8 +245,59 @@ static const shell_command_t shell_commands[] =
 int main(void)
 {
     /* Welcome message */
+    NetworkInit(&network);
     printf("Running mqtt paho example. Type help for commands info\n");
 
+    printf("Launching MQTT Task\n");
+    MQTTClientInit(&client, &network, COMMAND_TIMEOUT_MS, buf, BUF_SIZE,
+                   readbuf,
+                   BUF_SIZE);
+
+
+
+//    char * remote_ip = "fe80::8fd:ecff:fefa:24bf";
+//    int port = 1883;
+//
+//    if (NetworkConnect(&network, remote_ip, port) < 0) {
+//        printf("error: Unable to connect\n");
+//        return 1;
+//    }
+//
+//    MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
+//    data.MQTTVersion = MQTT_VERSION;
+//    data.keepAliveInterval = DEFAULT_KEEPALIVE_TIMEOUT;
+//    data.username.cstring = DEFAULT_USER;
+//    data.clientID.cstring = DEFAULT_CLIENTID;
+//    data.password.cstring = DEFAULT_PASSWORD;
+//    data.cleansession = IS_CLEAN_SESSION;
+//    data.willFlag = 0;
+//
+//    printf("Connecting to %s %d\n", remote_ip, port);
+//
+//    printf("user:%s clientId:%s password:%s\n", data.username.cstring,
+//           data.clientID.cstring, data.password.cstring);
+//    int ret = MQTTConnect(&client, &data);
+//    if (ret < 0) {
+//        printf("error: Unable to connect client %d\n", ret);
+//    }
+//    else {
+//        printf("Connection successfully\n");
+//    }
+//
+//    char *topic = "/test";
+//    MQTTStartTask(&client);
+//    ret = MQTTSubscribe(&client, topic, 2, _on_msg_received);
+//	printf("Subscribe return value: %d\n", ret);
+//
+//	if (ret < 0) {
+//		printf("error: Unable to subscribe to %s\n", topic);
+//	}
+//	else {
+//
+//		printf("Now subscribed to %s\n", topic);
+//	}
+//	while(1) {
+//	}
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
     return 0;

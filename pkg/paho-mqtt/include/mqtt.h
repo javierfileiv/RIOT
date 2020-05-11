@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 #ifndef MQTT_THREAD_PRIORITY
-#define MQTT_THREAD_PRIORITY    (THREAD_PRIORITY_MAIN + 1)
+#define MQTT_THREAD_PRIORITY    (THREAD_PRIORITY_MAIN - 1)
 #endif
 
 #ifndef MQTT_THREAD_STACKSIZE
@@ -41,7 +41,8 @@ extern "C" {
  */
 typedef struct Timer
 {
-    xtimer_ticks64_t timeout;   /**< timeout ticks*/
+    xtimer_ticks32_t now;   		/**< timeout ticks */
+    xtimer_ticks32_t ticks_timeout;			/**< timeout in ticks */
 } Timer;
 
 /**
