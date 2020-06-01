@@ -28,11 +28,15 @@ extern "C" {
 #endif
 
 #ifndef MQTT_THREAD_PRIORITY
-#define MQTT_THREAD_PRIORITY    (THREAD_PRIORITY_MAIN - 1)
+#define MQTT_THREAD_PRIORITY            (THREAD_PRIORITY_MAIN - 1)
 #endif
 
 #ifndef MQTT_THREAD_STACKSIZE
-#define MQTT_THREAD_STACKSIZE   (THREAD_STACKSIZE_DEFAULT)
+#define MQTT_THREAD_STACKSIZE           (THREAD_STACKSIZE_DEFAULT)
+#endif
+
+#ifndef MQTT_YIELD_POLLING_MS
+#define MQTT_YIELD_POLLING_MS           (30)
 #endif
 
 /**
@@ -41,8 +45,8 @@ extern "C" {
  */
 typedef struct Timer
 {
-    xtimer_ticks32_t now;   		/**< timeout ticks */
-    xtimer_ticks32_t ticks_timeout;			/**< timeout in ticks */
+    xtimer_ticks64_t set_ticks;             /**< timeout ticks */
+    xtimer_ticks64_t ticks_timeout;         /**< timeout in ticks */
 } Timer;
 
 /**
@@ -94,8 +98,6 @@ typedef struct Network
     sock_tcp_t sock;                                                    /**< socket number */
     int (*mqttread) (struct Network*, unsigned char*, int, int);        /**< read internal function */
     int (*mqttwrite) (struct Network*, unsigned char*, int, int);       /**< write internal function */
-    int (*disconnect) (struct Network*);                                /**< disconnect internal function */
-
 } Network;
 
 /**
@@ -174,7 +176,7 @@ typedef struct Thread
  *
  * @return  0 if success, !=0 otherwise
  */
-int ThreadStart(Thread* thread, void *(*fn)(void*), void* arg);
+int ThreadStart(Thread* thread, void (*fn)(void*), void* arg);
 
 #ifdef __cplusplus
 }

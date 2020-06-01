@@ -16,26 +16,30 @@ QUIET ?= 1
 
 #####################
 USEPKG += paho-mqtt
+USEMODULE += ipv6_addr
 USEMODULE += lwip_ipv6
 USEMODULE += lwip_ipv6_autoconfig
-# including lwip_ipv6_mld would currently break this test on at86rf2xx radios
 USEMODULE += lwip lwip_sock_ip lwip_netdev
+USEMODULE += lwip_udp lwip_sock_udp
 USEMODULE += lwip_tcp lwip_sock_tcp
-USEMODULE += inet_csum
-USEMODULE += shell
-USEMODULE += od
+USEMODULE += lwip_sock_async
+USEMODULE += sock_async_event
 USEMODULE += shell
 USEMODULE += shell_commands
 USEMODULE += ps
 USEMODULE += netdev_default
 
-CFLAGS += -DSO_REUSE
-CFLAGS += -DLWIP_SO_RCVTIMEO
-CFLAGS += -DLWIP_SOCK_TCP_ACCEPT_TIMEOUT=500
-CFLAGS += -DLWIP_NETIF_LOOPBACK=0
-CFLAGS += -DLWIP_HAVE_LOOPIF=0
 ifeq ($(BOARD),native)
   USEMODULE += lwip_ethernet
 endif
+
+LOG_LEVEL ?= LOG_INFO
+CFLAGS += -DSO_REUSE
+CFLAGS += -DLWIP_SO_RCVTIMEO
+CFLAGS += -DLWIP_SOCK_TCP_ACCEPT_TIMEOUT=500
+CFLAGS += -DLWIP_NETIF_LOOPBACK=1
+CFLAGS += -DLWIP_HAVE_LOOPIF=0
+
+CFLAGS += -DDEFAULT_MQTT_BROKER_IP=\"fe80::d09d:72ff:fef7:88ba\"
 
 include $(RIOTBASE)/Makefile.include

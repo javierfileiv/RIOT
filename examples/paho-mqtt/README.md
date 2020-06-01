@@ -10,16 +10,25 @@ For example this one for debian base linux users [How to setup a Mosquitto MQTT 
 
 2. Your RIOT node needs to be able to speak to that broker at the same port you set in 1.
 
-### Setting up RIOT `native`
+### Setting up RIOT `native` on Linux
+- Run the script create.sh in dist/tools
+- Replace the value of *DEFAULT_MQTT_BROKER_IP* with the IPv6 address provide by `ifconfig tapbr0`
+- Change the default *MQTT_PORT* if needed
+- You'll be able to change to broker IP or connection PORT within the `con` shell command if needed.
 When running the example
+
+## Running the example
 
 - To connect to a broker, use the `con` command:
 ```
-con fec0:affe::1 1883 <clientID> <username passwd> <keepalivetime>
+con <broker ip> <broker port> <clientID> <username passwd> <keepalivetime>
 ```
-clientID: is the client id you set up on the broker.
-username and passwd: those set in the broker, check online tutorial to do it regarding chosen broker.
-keepalivetime: keep alive in second for your client.
+
+* If no parameter is set, it will connect to *DEFAULT_MQTT_BROKER_IP*:*MQTT_PORT* with user=riot password=riot
+
+  * *clientID*: is the client id you set up on the broker.
+  * *username and passwd*: those set in the broker, check online tutorial to do it regarding chosen broker.
+  * *keepalivetime*: keep alive in second for your client. (Default one is 10 secs)
 
 - To subscribe to a topic, run `sub` with the topic name as parameter and a QoS level between 1 to 3 (optional), e.g.
 ```

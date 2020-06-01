@@ -3,7 +3,7 @@ INCLUDES += -I$(PKGDIRBASE)/paho-mqtt/MQTTPacket/src
 INCLUDES += -I$(RIOTBASE)/pkg/paho-mqtt/include
 DIRS += $(RIOTBASE)/pkg/paho-mqtt/contrib
 
-CFLAGS += -DSOCK_HAS_IPV6
+CFLAGS += -DSOCK_HAS_IPV6 -DSOCK_HAS_IPV4
 
 #define to use MQTT Paho as a task using MQTTStartTask()
 CFLAGS += -DMQTT_TASK=1
