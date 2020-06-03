@@ -11,30 +11,34 @@ For example this one for debian base linux users [How to setup a Mosquitto MQTT 
 2. Your RIOT node needs to be able to speak to that broker at the same port you set in 1.
 
 ### Setting up RIOT `native` on Linux
-- Run the script create.sh in dist/tools
-- Replace the value of *DEFAULT_MQTT_BROKER_IP* with the IPv6 address provide by `ifconfig tapbr0`
-- Change the default *MQTT_PORT* if needed
-- You'll be able to change to broker IP or connection PORT within the `con` shell command if needed.
-When running the example
+- Run `sudo ./dist/tools/tapsetup/tapsetup -c 1`
 
 ## Running the example
+- Run on RIOT's root directory:
+
+  make -C examples/paho-mqtt all term
 
 - To connect to a broker, use the `con` command:
 ```
-con <broker ip> <broker port> <clientID> <username passwd> <keepalivetime>
+con <ipv6 addr> <port> <KeepAliveInterval in sec> <user> <user ID> <password>
+```
+  * *ipv6 addr*: IPv6 broker address.
+  * *port*: broker port.
+  * *keepalivetime*: keep alive in second for your client.
+  * *user ID*: is the client id you set up on the broker.
+  * *user and password*: those set in the broker, check online tutorial to do it regarding chosen broker.
+  * *keepalivetime*: keep alive in second for your client.
+
+- To subscribe to a topic, run `sub` with the topic name as parameter and a QoS level between 1 to 3, e.g.
+```
+sub hello/world 2
+```
+- To unsubscribe to a topic, run `unsub` with the topic name e.g.
+```
+unsub hello/world
 ```
 
-* If no parameter is set, it will connect to *DEFAULT_MQTT_BROKER_IP*:*MQTT_PORT* with user=riot password=riot
-
-  * *clientID*: is the client id you set up on the broker.
-  * *username and passwd*: those set in the broker, check online tutorial to do it regarding chosen broker.
-  * *keepalivetime*: keep alive in second for your client. (Default one is 10 secs)
-
-- To subscribe to a topic, run `sub` with the topic name as parameter and a QoS level between 1 to 3 (optional), e.g.
+- For publishing, use the `pub` command with a QoS level between 1 to 3:
 ```
-sub hello/world [2]
-```
-- For publishing, use the `pub` command (with a QoS level between 1 to 3 (optional)):
-```
-pub hello/world "One more beer, please." [2]
+pub hello/world "One more beer, please." 2
 ```

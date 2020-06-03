@@ -27,9 +27,13 @@
 #include "debug.h"
 
 #ifdef MODULE_LWIP
-#define TSRB_MAX_SIZE                       1024
+#define TSRB_MAX_SIZE                       (1024)
 static uint8_t buffer[TSRB_MAX_SIZE];
 static tsrb_t tsrb_lwip_tcp;
+#endif
+
+#ifndef PAHO_MQTT_YIELD_MS
+#define PAHO_MQTT_YIELD_MS                  (500)
 #endif
 
 static int mqtt_read(struct Network *n, unsigned char *buf, int len,
@@ -56,8 +60,7 @@ static int mqtt_read(struct Network *n, unsigned char *buf, int len,
 #endif
 
     uint64_t send_tick = xtimer_now64().ticks64 + xtimer_ticks_from_usec64(timeout_ms * US_PER_MS).ticks64;
-    do
-    {
+    do {
         rc = sock_tcp_read(&n->sock, temp_buf, _len, _timeout);
         if (rc == -EAGAIN) {
             rc = 0;
@@ -76,7 +79,7 @@ static int mqtt_read(struct Network *n, unsigned char *buf, int len,
 #ifdef MODULE_LWIP
     if (rc > 0) {
         DEBUG("MQTT buf asked for %d, available to read %d\n", rc, tsrb_avail(&tsrb_lwip_tcp));
-        for (int i=0; i<rc; i++) {
+        for (int i = 0; i < rc; i++) {
             DEBUG("0x%02X ", buf[i]);
         }
         DEBUG("\n");
@@ -189,19 +192,18 @@ int MutexUnlock(Mutex *mutex)
 
 void *mqtt_riot_run(void *arg)
 {
-    int rc;
-    while (1) {
-        if (arg) {
-            MQTTClient *client = (MQTTClient *)arg;
+    MQTTClient *client = (MQTTClient *)arg;
+    assert(client);
 
-            MutexLock(&client->mutex);
-            if ((rc = MQTTYield(client, 500)) != 0) {
-                LOG_DEBUG("riot_iface: error while MQTTYield()(%d)\n", rc);
-            }
-            MutexUnlock(&client->mutex);
-            /* let other threads make their work */
-            xtimer_usleep(MQTT_YIELD_POLLING_MS * US_PER_MS);
+    while (1) {
+        int rc;
+        MutexLock(&client->mutex);
+        if ((rc = MQTTYield(client, PAHO_MQTT_YIELD_MS)) != 0) {
+            LOG_DEBUG("riot_iface: error while MQTTYield()(%d)\n", rc);
         }
+        MutexUnlock(&client->mutex);
+        /* let other threads make their work */
+        xtimer_usleep(MQTT_YIELD_POLLING_MS * US_PER_MS);
     }
     return NULL;
 }

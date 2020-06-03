@@ -1,0 +1,3 @@
+ifeq ($(BOARD),native)
+  USEMODULE += lwip_ethernet
+endif

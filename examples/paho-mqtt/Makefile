@@ -29,17 +29,10 @@ USEMODULE += shell_commands
 USEMODULE += ps
 USEMODULE += netdev_default
 
-ifeq ($(BOARD),native)
-  USEMODULE += lwip_ethernet
-endif
-
-LOG_LEVEL ?= LOG_INFO
 CFLAGS += -DSO_REUSE
 CFLAGS += -DLWIP_SO_RCVTIMEO
 CFLAGS += -DLWIP_SOCK_TCP_ACCEPT_TIMEOUT=500
 CFLAGS += -DLWIP_NETIF_LOOPBACK=1
 CFLAGS += -DLWIP_HAVE_LOOPIF=0
-
-CFLAGS += -DDEFAULT_MQTT_BROKER_IP=\"fe80::d09d:72ff:fef7:88ba\"
 
 include $(RIOTBASE)/Makefile.include

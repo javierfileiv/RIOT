@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019
+ * Copyright (C) 2019 Javier FILEIV <javier.fileiv@gmail.com>
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -27,16 +27,12 @@
 #include "mutex.h"
 #include "mqtt.h"
 #include "MQTTClient.h"
-#include "log.h"
 
 #define BUF_SIZE                        1024
 #define MQTT_VERSION_v311               4     /* MQTT v3.1.1 version is 4 */
 #define COMMAND_TIMEOUT_MS              4000
 #define DEFAULT_KEEPALIVE_SEC           10    /**< Keepalive timeout in seconds */
 
-#ifndef DEFAULT_MQTT_BROKER_IP
-#define DEFAULT_MQTT_BROKER_IP          "fe80::d09d:72ff:fef7:88ba"
-#endif
 #ifndef DEFAULT_MQTT_PORT
 #define DEFAULT_MQTT_PORT               1883
 #endif
@@ -49,9 +45,6 @@
 #define MAX_TOPICS                      4
 #endif
 
-#define DEFAULT_CLIENTID                ""
-#define DEFAULT_USER                    "riot"
-#define DEFAULT_PASSWORD                "riot"
 #define IS_CLEAN_SESSION                1
 #define IS_RETAINED_MSG                 0
 
@@ -73,7 +66,7 @@ static unsigned get_qos(const char *str)
 
 static void _on_msg_received(MessageData *data)
 {
-    LOG_DEBUG("paho_mqtt_example: message received on topic"
+    printf("paho_mqtt_example: message received on topic"
            " %.*s: %.*s\n",
            (int)data->topicName->lenstring.len,
            data->topicName->lenstring.data, (int)data->message->payloadlen,
@@ -88,10 +81,10 @@ static int _cmd_discon(int argc, char **argv)
     topic_cnt = 0;
     int res = MQTTDisconnect(&client);
     if (res < 0) {
-        LOG_ERROR("mqtt_example: Unable to disconnect\n");
+        printf("mqtt_example: Unable to disconnect\n");
     }
     else {
-        LOG_INFO("mqtt_example: Disconnect successful\n");
+        printf("mqtt_example: Disconnect successful\n");
     }
 
     NetworkDisconnect(&network);
@@ -100,71 +93,54 @@ static int _cmd_discon(int argc, char **argv)
 
 static int _cmd_con(int argc, char **argv)
 {
-    char *host_ip = DEFAULT_MQTT_BROKER_IP;
-    int ret = -1;
-
-    if (argc > 2) {
-        host_ip = argv[1];
+    if (argc < 7) {
+        printf(
+            "usage: %s <ipv6 addr> <port> <KeepAliveInterval in sec> <user> <user ID> <password> \n",
+            argv[0]);
+        return 1;
     }
+
+    char *remote_ip = argv[1];
+
+    int ret = -1;
 
     /* ensure client isn't connected in case of a new connection */
     if (client.isconnected) {
-        LOG_INFO("mqtt_example: client already connected, disconnecting it\n");
+        printf("mqtt_example: client already connected, disconnecting it\n");
         MQTTDisconnect(&client);
         NetworkDisconnect(&network);
     }
 
-    int port = DEFAULT_MQTT_PORT;
-    if (argc > 3) {
-        port = atoi(argv[2]);
-    }
+    int port = atoi(argv[2]);
 
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     data.MQTTVersion = MQTT_VERSION_v311;
-    data.keepAliveInterval = DEFAULT_KEEPALIVE_SEC;
-
-    if (argc > 3) {
-        data.keepAliveInterval = atoi(argv[3]);
-    }
-
-    data.username.cstring = DEFAULT_USER;
-    if (argc > 4) {
-        data.username.cstring = argv[4];
-    }
-
-    data.clientID.cstring = DEFAULT_CLIENTID;
-    if (argc > 5) {
-        data.clientID.cstring = argv[5];
-    }
-
-    data.password.cstring = DEFAULT_PASSWORD;
-    if (argc > 6) {
-        data.password.cstring = argv[6];
-    }
-
+    data.keepAliveInterval = atoi(argv[3]);
+    data.username.cstring = argv[4];
+    data.clientID.cstring = argv[5];
+    data.password.cstring = argv[6];
     data.cleansession = IS_CLEAN_SESSION;
     data.willFlag = 0;
 
-    LOG_INFO("mqtt_example: Connecting to MQTT Broker from %s %d\n", host_ip, port);
-
-    LOG_INFO("mqtt_example: Trying to connect to %s , port: %d\n",
-             host_ip, port);
-    ret = NetworkConnect(&network, host_ip, port);
+    printf("mqtt_example: Connecting to MQTT Broker from %s %d\n", remote_ip, port);
+    printf("mqtt_example: Trying to connect to %s , port: %d\n",
+            remote_ip, port);
+    ret = NetworkConnect(&network, remote_ip, port);
     if (ret < 0) {
-        LOG_ERROR("mqtt_example: Unable to connect\n");
+        printf("mqtt_example: Unable to connect\n");
         return ret;
     }
 
-    LOG_INFO("user:%s clientId:%s password:%s\n", data.username.cstring,
+    printf("user:%s clientId:%s password:%s\n", data.username.cstring,
              data.clientID.cstring, data.password.cstring);
     ret = MQTTConnect(&client, &data);
     if (ret < 0) {
-        LOG_ERROR("mqtt_example: Unable to connect client %d\n", ret);
+        printf("mqtt_example: Unable to connect client %d\n", ret);
         _cmd_discon(0, NULL);
         return ret;
     }
     else {
-        LOG_INFO("mqtt_example: Connection successfully\n");
+        printf("mqtt_example: Connection successfully\n");
     }
 
     return (ret > 0) ? 0 : 1;
@@ -175,7 +151,7 @@ static int _cmd_pub(int argc, char **argv)
     enum QoS qos = QOS0;
 
     if (argc < 3) {
-        LOG_DEBUG("usage: %s <topic name> <string msg> [QoS level]\n",
+        printf("usage: %s <topic name> <string msg> [QoS level]\n",
                argv[0]);
         return 1;
     }
@@ -190,10 +166,10 @@ static int _cmd_pub(int argc, char **argv)
 
     int rc;
     if ((rc = MQTTPublish(&client, argv[1], &message)) < 0) {
-        LOG_ERROR("mqtt_example: Unable to publish (%d)\n", rc);
+        printf("mqtt_example: Unable to publish (%d)\n", rc);
     }
     else {
-        LOG_INFO("mqtt_example: Message (%s) has been published to topic %s with QOS %d\n",
+        printf("mqtt_example: Message (%s) has been published to topic %s with QOS %d\n",
                  (char *)message.payload, argv[1], (int)message.qos);
     }
 
@@ -205,7 +181,7 @@ static int _cmd_sub(int argc, char **argv)
     enum QoS qos = QOS0;
 
     if (argc < 2) {
-        LOG_DEBUG("usage: %s <topic name> [QoS level]\n", argv[0]);
+        printf("usage: %s <topic name> [QoS level]\n", argv[0]);
         return 1;
     }
 
@@ -214,24 +190,24 @@ static int _cmd_sub(int argc, char **argv)
     }
 
     if (topic_cnt > MAX_TOPICS) {
-        LOG_ERROR("mqtt_example: Already subscribed to max %d topics, call 'unsub' command\n", topic_cnt);
+        printf("mqtt_example: Already subscribed to max %d topics, call 'unsub' command\n", topic_cnt);
         return -1;
     }
 
     if (strlen(argv[1]) > MAX_LEN_TOPIC) {
-        LOG_ERROR("mqtt_example: Not subscribing, topic too long %s\n", argv[1]);
+        printf("mqtt_example: Not subscribing, topic too long %s\n", argv[1]);
         return -1;
     }
     strncpy(_topic_to_subscribe[topic_cnt], argv[1], strlen(argv[1]));
 
-    LOG_INFO("mqtt_example: Subscribing to %s\n", _topic_to_subscribe[topic_cnt]);
+    printf("mqtt_example: Subscribing to %s\n", _topic_to_subscribe[topic_cnt]);
     int ret = MQTTSubscribe(&client, _topic_to_subscribe[topic_cnt], qos, _on_msg_received);
     if (ret < 0) {
-        LOG_ERROR("mqtt_example: Unable to subscribe to %s (%d)\n", _topic_to_subscribe[topic_cnt], ret);
+        printf("mqtt_example: Unable to subscribe to %s (%d)\n", _topic_to_subscribe[topic_cnt], ret);
         _cmd_discon(0, NULL);
     }
     else {
-        LOG_INFO("mqtt_example: Now subscribed to %s, QOS %d\n", argv[1], (int) qos);
+        printf("mqtt_example: Now subscribed to %s, QOS %d\n", argv[1], (int) qos);
         topic_cnt++;
     }
     return ret;
@@ -240,18 +216,18 @@ static int _cmd_sub(int argc, char **argv)
 static int _cmd_unsub(int argc, char **argv)
 {
     if (argc < 2) {
-        LOG_DEBUG("usage %s <topic name>\n", argv[0]);
+        printf("usage %s <topic name>\n", argv[0]);
         return 1;
     }
 
     int ret = MQTTUnsubscribe(&client, argv[1]);
 
     if (ret < 0) {
-        LOG_ERROR("mqtt_example: Unable to unsubscribe from topic: %s\n", argv[1]);
+        printf("mqtt_example: Unable to unsubscribe from topic: %s\n", argv[1]);
         _cmd_discon(0, NULL);
     }
     else {
-        LOG_INFO("mqtt_example: Unsubscribed from topic:%s\n", argv[1]);
+        printf("mqtt_example: Unsubscribed from topic:%s\n", argv[1]);
         topic_cnt--;
     }
     return ret;
@@ -269,6 +245,7 @@ static const shell_command_t shell_commands[] =
 
 static unsigned char buf[BUF_SIZE];
 static unsigned char readbuf[BUF_SIZE];
+
 int main(void)
 {
 #ifdef MODULE_LWIP
@@ -281,7 +258,7 @@ int main(void)
     MQTTClientInit(&client, &network, COMMAND_TIMEOUT_MS, buf, BUF_SIZE,
                    readbuf,
                    BUF_SIZE);
-    LOG_INFO("Running mqtt paho example. Type help for commands info\n");
+    printf("Running mqtt paho example. Type help for commands info\n");
 
     MQTTStartTask(&client);
 
