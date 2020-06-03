@@ -43,8 +43,7 @@ extern "C" {
  * @brief  struct to get time references within mqtt paho
  *
  */
-typedef struct Timer
-{
+typedef struct {
     xtimer_ticks64_t set_ticks;             /**< timeout ticks */
     xtimer_ticks64_t ticks_timeout;         /**< timeout in ticks */
 } Timer;
@@ -54,7 +53,7 @@ typedef struct Timer
  *
  * @param timer timer to init
  */
-void TimerInit(Timer* timer);
+void TimerInit(Timer *timer);
 
 /**
  * @brief  is timer expired?
@@ -63,7 +62,7 @@ void TimerInit(Timer* timer);
  *
  * @return 1 if timer expired, 0 otherwise
  */
-char TimerIsExpired(Timer* timer);
+char TimerIsExpired(Timer *timer);
 
 /**
  * @brief  start timer set to milli seconds
@@ -71,7 +70,7 @@ char TimerIsExpired(Timer* timer);
  * @param   timer   timer to start
  * @param   msecs   time to set in msecs
  */
-void TimerCountdownMS(Timer* timer, unsigned int msecs);
+void TimerCountdownMS(Timer *timer, unsigned int msecs);
 
 /**
  * @brief  start timer set to seconds
@@ -79,7 +78,7 @@ void TimerCountdownMS(Timer* timer, unsigned int msecs);
  * @param   timer   timer to start
  * @param   secs   time to set in secs
  */
-void TimerCountdown(Timer* timer, unsigned int secs);
+void TimerCountdown(Timer *timer, unsigned int secs);
 
 /**
  * @brief  Returns millisecs left in timer
@@ -88,13 +87,12 @@ void TimerCountdown(Timer* timer, unsigned int secs);
  *
  * @return  msecs left
  */
-int TimerLeftMS(Timer* timer);
+int TimerLeftMS(Timer *timer);
 
 /**
  * @brief  Network struct within mqtt paho
  */
-typedef struct Network
-{
+typedef struct Network{
     sock_tcp_t sock;                                                    /**< socket number */
     int (*mqttread) (struct Network*, unsigned char*, int, int);        /**< read internal function */
     int (*mqttwrite) (struct Network*, unsigned char*, int, int);       /**< write internal function */
@@ -105,7 +103,7 @@ typedef struct Network
  *
  * @param   n   network struct
  */
-void NetworkInit(Network* n);
+void NetworkInit(Network *n);
 
 /**
  * @brief  Connect network to host
@@ -116,20 +114,19 @@ void NetworkInit(Network* n);
  *
  * @return  0 if success, !=0 otherwise
  */
-int NetworkConnect(Network* n, char* address_ip, int port_number);
+int NetworkConnect(Network *n, char* address_ip, int port_number);
 
 /**
  * @brief  Disconnect network
  *
  * @param   n       network struct
  */
-void NetworkDisconnect(Network* n);
+void NetworkDisconnect(Network *n);
 
 /**
  * @brief  Mutex struct within mqtt paho
  */
-typedef struct Mutex
-{
+typedef struct {
     mutex_t lock;   /**< MQTT thread mutex*/
 } Mutex;
 
@@ -138,7 +135,7 @@ typedef struct Mutex
  *
  * @param  mutex pointer
  */
-void MutexInit(Mutex* mutex);
+void MutexInit(Mutex *mutex);
 
 /**
  * @brief  Locks mutex struct
@@ -147,7 +144,7 @@ void MutexInit(Mutex* mutex);
  *
  * @return  0 if success, !=0 otherwise
  */
-int MutexLock(Mutex* mutex);
+int MutexLock(Mutex *mutex);
 
 /**
  * @brief  Unlocks mutex struct
@@ -156,13 +153,12 @@ int MutexLock(Mutex* mutex);
  *
  * @return  0 if success, !=0 otherwise
  */
-int MutexUnlock(Mutex* mutex);
+int MutexUnlock(Mutex *mutex);
 
 /**
  * @brief  Thread struct within mqtt paho
  */
-typedef struct Thread
-{
+typedef struct {
     char stack[MQTT_THREAD_STACKSIZE];      /**< stack variable for MQTT thread*/
     kernel_pid_t pid;                       /**< MQTT thread pid*/
 } Thread;
@@ -176,7 +172,7 @@ typedef struct Thread
  *
  * @return  0 if success, !=0 otherwise
  */
-int ThreadStart(Thread* thread, void (*fn)(void*), void* arg);
+int ThreadStart(Thread *thread, void (*fn)(void *), void *arg);
 
 #ifdef __cplusplus
 }

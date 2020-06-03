@@ -20,14 +20,13 @@ For example this one for debian base linux users [How to setup a Mosquitto MQTT 
 
 - To connect to a broker, use the `con` command:
 ```
-con <ipv6 addr> <port> <KeepAliveInterval in sec> <user> <user ID> <password>
+con <ipv6 addr> <port> <keepalivetime> <client ID> <user> <password>
 ```
   * *ipv6 addr*: IPv6 broker address.
   * *port*: broker port.
-  * *keepalivetime*: keep alive in second for your client.
-  * *user ID*: is the client id you set up on the broker.
+  * *keepalivetime*: keep alive in seconds for your client.
+  * *client ID*: is the client id you set up on the broker.
   * *user and password*: those set in the broker, check online tutorial to do it regarding chosen broker.
-  * *keepalivetime*: keep alive in second for your client.
 
 - To subscribe to a topic, run `sub` with the topic name as parameter and a QoS level between 1 to 3, e.g.
 ```

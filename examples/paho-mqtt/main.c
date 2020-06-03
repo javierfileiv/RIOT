@@ -95,7 +95,7 @@ static int _cmd_con(int argc, char **argv)
 {
     if (argc < 7) {
         printf(
-            "usage: %s <ipv6 addr> <port> <KeepAliveInterval in sec> <user> <user ID> <password> \n",
+            "usage: %s <ipv6 addr> <port> <keepalivetime> <client ID> <user> <password>\n",
             argv[0]);
         return 1;
     }
@@ -116,8 +116,8 @@ static int _cmd_con(int argc, char **argv)
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     data.MQTTVersion = MQTT_VERSION_v311;
     data.keepAliveInterval = atoi(argv[3]);
-    data.username.cstring = argv[4];
-    data.clientID.cstring = argv[5];
+    data.clientID.cstring = argv[4];
+    data.username.cstring = argv[5];
     data.password.cstring = argv[6];
     data.cleansession = IS_CLEAN_SESSION;
     data.willFlag = 0;

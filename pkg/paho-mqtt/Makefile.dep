@@ -2,7 +2,7 @@ USEMODULE += xtimer
 USEMODULE += ipv4_addr
 USEMODULE += ipv6_addr
 ifneq (,$(filter lwip_sock_tcp,$(USEMODULE)))
-    USEMODULE += tsrb
+USEMODULE += tsrb
 endif
 USEMODULE += paho-mqtt-contrib
 USEMODULE += paho-mqtt-packet
