@@ -33,6 +33,9 @@
 #define COMMAND_TIMEOUT_MS              4000
 #define DEFAULT_KEEPALIVE_SEC           10    /**< Keepalive timeout in seconds */
 
+#ifndef DEFAULT_MQTT_BROKER_IP
+#define DEFAULT_MQTT_BROKER_IP          "fe80::d09d:72ff:fef7:88ba"
+#endif
 #ifndef DEFAULT_MQTT_PORT
 #define DEFAULT_MQTT_PORT               1883
 #endif
@@ -45,6 +48,9 @@
 #define MAX_TOPICS                      4
 #endif
 
+#define DEFAULT_CLIENTID                ""
+#define DEFAULT_USER                    "riot"
+#define DEFAULT_PASSWORD                "riot"
 #define IS_CLEAN_SESSION                1
 #define IS_RETAINED_MSG                 0
 
@@ -93,16 +99,14 @@ static int _cmd_discon(int argc, char **argv)
 
 static int _cmd_con(int argc, char **argv)
 {
-    if (argc < 7) {
-        printf(
-            "usage: %s <ipv6 addr> <port> <KeepAliveInterval in sec> <user> <user ID> <password> \n",
-            argv[0]);
-        return 1;
-    }
-
+    char *host_ip = DEFAULT_MQTT_BROKER_IP;
     char *remote_ip = argv[1];
 
     int ret = -1;
+
+    if (argc > 2) {
+        host_ip = argv[1];
+    }
 
     /* ensure client isn't connected in case of a new connection */
     if (client.isconnected) {
@@ -111,21 +115,41 @@ static int _cmd_con(int argc, char **argv)
         NetworkDisconnect(&network);
     }
 
-    int port = atoi(argv[2]);
+    int port = DEFAULT_MQTT_PORT;
+    if (argc > 3) {
+        port = atoi(argv[2]);
+    }
 
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     data.MQTTVersion = MQTT_VERSION_v311;
-    data.keepAliveInterval = atoi(argv[3]);
-    data.username.cstring = argv[4];
-    data.clientID.cstring = argv[5];
-    data.password.cstring = argv[6];
+    data.keepAliveInterval = DEFAULT_KEEPALIVE_SEC;
+
+    if (argc > 3) {
+        data.keepAliveInterval = atoi(argv[3]);
+    }
+
+    data.username.cstring = DEFAULT_USER;
+    if (argc > 4) {
+        data.username.cstring = argv[4];
+    }
+
+    data.clientID.cstring = DEFAULT_CLIENTID;
+    if (argc > 5) {
+        data.clientID.cstring = argv[5];
+    }
+
+    data.password.cstring = DEFAULT_PASSWORD;
+    if (argc > 6) {
+        data.password.cstring = argv[6];
+    }
+
     data.cleansession = IS_CLEAN_SESSION;
     data.willFlag = 0;
 
     printf("mqtt_example: Connecting to MQTT Broker from %s %d\n", remote_ip, port);
     printf("mqtt_example: Trying to connect to %s , port: %d\n",
             remote_ip, port);
-    ret = NetworkConnect(&network, remote_ip, port);
+    ret = NetworkConnect(&network, host_ip, port);
     if (ret < 0) {
         printf("mqtt_example: Unable to connect\n");
         return ret;
