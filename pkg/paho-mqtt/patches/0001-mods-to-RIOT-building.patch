@@ -1,51 +1,14 @@
-From e6ef03acbbf6576d6f894457ef71f6085a238df6 Mon Sep 17 00:00:00 2001
+From 21522ac5fff73a705c58a73e846e3ef79d030a2d Mon Sep 17 00:00:00 2001
 From: Javier FILEIV <javier.fileiv@gmail.com>
-Date: Wed, 3 Jun 2020 12:17:21 +0200
-Subject: [PATCH] patch riot
+Date: Wed, 3 Jun 2020 15:58:02 +0200
+Subject: [PATCH] paho-mqtt: mods to build with RIOT
 
 ---
- MQTTClient-C/src/MQTTClient.c           |  6 +++---
- MQTTClient-C/src/MQTTClient.h           |  7 +++++++
- MQTTPacket/src/MQTTDeserializePublish.c |  2 +-
- MQTTPacket/src/MQTTPublish.h            |  4 +++-
- MQTTPacket/src/MQTTSubscribe.h          | 10 ++++++----
- MQTTPacket/src/MQTTSubscribeClient.c    |  4 ++--
- MQTTPacket/src/MQTTSubscribeServer.c    |  4 ++--
- 7 files changed, 24 insertions(+), 13 deletions(-)
+ MQTTClient-C/src/MQTTClient.h | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/MQTTClient-C/src/MQTTClient.c b/MQTTClient-C/src/MQTTClient.c
-index bd24dff..509c5e3 100755
---- a/MQTTClient-C/src/MQTTClient.c
-+++ b/MQTTClient-C/src/MQTTClient.c
-@@ -280,7 +280,7 @@ int cycle(MQTTClient* c, Timer* timer)
-             MQTTMessage msg;
-             int intQoS;
-             msg.payloadlen = 0; /* this is a size_t, but deserialize publish sets this as int */
--            if (MQTTDeserialize_publish(&msg.dup, &intQoS, &msg.retained, &msg.id, &topicName,
-+            if (MQTTDeserialize_publish(&msg.dup, (uint8_t*) &intQoS, &msg.retained, &msg.id, &topicName,
-                (unsigned char**)&msg.payload, (int*)&msg.payloadlen, c->readbuf, c->readbuf_size) != 1)
-                 goto exit;
-             msg.qos = (enum QoS)intQoS;
-@@ -532,7 +532,7 @@ int MQTTSubscribeWithResults(MQTTClient* c, const char* topicFilter, enum QoS qo
-     TimerInit(&timer);
-     TimerCountdownMS(&timer, c->command_timeout_ms);
- 
--    len = MQTTSerialize_subscribe(c->buf, c->buf_size, 0, getNextPacketId(c), 1, &topic, (int*)&qos);
-+    len = MQTTSerialize_subscribe(c->buf, c->buf_size, 0, getNextPacketId(c), 1, &topic, (uint8_t*)&qos);
-     if (len <= 0)
-         goto exit;
-     if ((rc = sendPacket(c, len, &timer)) != SUCCESS) // send the subscribe packet
-@@ -543,7 +543,7 @@ int MQTTSubscribeWithResults(MQTTClient* c, const char* topicFilter, enum QoS qo
-         int count = 0;
-         unsigned short mypacketid;
-         data->grantedQoS = QOS0;
--        if (MQTTDeserialize_suback(&mypacketid, 1, &count, (int*)&data->grantedQoS, c->readbuf, c->readbuf_size) == 1)
-+        if (MQTTDeserialize_suback(&mypacketid, 1, &count, (uint8_t*)&data->grantedQoS, c->readbuf, c->readbuf_size) == 1)
-         {
-             if (data->grantedQoS != 0x80)
-                 rc = MQTTSetMessageHandler(c, topicFilter, messageHandler);
 diff --git a/MQTTClient-C/src/MQTTClient.h b/MQTTClient-C/src/MQTTClient.h
-index b612341..c600db9 100755
+index b612341..757a1dc 100755
 --- a/MQTTClient-C/src/MQTTClient.h
 +++ b/MQTTClient-C/src/MQTTClient.h
 @@ -54,7 +54,14 @@
@@ -53,7 +16,7 @@ index b612341..c600db9 100755
  
  /* all failure return codes must be negative */
 +
-+#if defined(CPU_FAM_STM32L4) || defined(CPU_FAM_STM32L1)
++#if defined(CPU_FAM_STM32L4) || defined(CPU_FAM_STM32L1) || defined(CPU_FAM_STM32WB)
 +/* the SUCCESS enum is also defined with stm32 L1 and L4 families
 +Since it contains the same value, we just skip its definition here for them. */
 +enum returnCode { BUFFER_OVERFLOW = -2, FAILURE = -1};
@@ -63,117 +26,6 @@ index b612341..c600db9 100755
  
  /* The Platform specific header must define the Network and Timer structures and functions
   * which operate on them.
-diff --git a/MQTTPacket/src/MQTTDeserializePublish.c b/MQTTPacket/src/MQTTDeserializePublish.c
-index dafb6a3..30d8119 100644
---- a/MQTTPacket/src/MQTTDeserializePublish.c
-+++ b/MQTTPacket/src/MQTTDeserializePublish.c
-@@ -33,7 +33,7 @@
-   * @param buflen the length in bytes of the data in the supplied buffer
-   * @return error code.  1 is success
-   */
--int MQTTDeserialize_publish(unsigned char* dup, int* qos, unsigned char* retained, unsigned short* packetid, MQTTString* topicName,
-+int MQTTDeserialize_publish(unsigned char* dup, uint8_t* qos, unsigned char* retained, unsigned short* packetid, MQTTString* topicName,
- 		unsigned char** payload, int* payloadlen, unsigned char* buf, int buflen)
- {
- 	MQTTHeader header = {0};
-diff --git a/MQTTPacket/src/MQTTPublish.h b/MQTTPacket/src/MQTTPublish.h
-index ebe479d..f056bdf 100644
---- a/MQTTPacket/src/MQTTPublish.h
-+++ b/MQTTPacket/src/MQTTPublish.h
-@@ -18,6 +18,8 @@
- #ifndef MQTTPUBLISH_H_
- #define MQTTPUBLISH_H_
- 
-+#include <inttypes.h>
-+
- #if !defined(DLLImport)
-   #define DLLImport 
- #endif
-@@ -28,7 +30,7 @@
- DLLExport int MQTTSerialize_publish(unsigned char* buf, int buflen, unsigned char dup, int qos, unsigned char retained, unsigned short packetid,
- 		MQTTString topicName, unsigned char* payload, int payloadlen);
- 
--DLLExport int MQTTDeserialize_publish(unsigned char* dup, int* qos, unsigned char* retained, unsigned short* packetid, MQTTString* topicName,
-+DLLExport int MQTTDeserialize_publish(unsigned char* dup, uint8_t* qos, unsigned char* retained, unsigned short* packetid, MQTTString* topicName,
- 		unsigned char** payload, int* payloadlen, unsigned char* buf, int len);
- 
- DLLExport int MQTTSerialize_puback(unsigned char* buf, int buflen, unsigned short packetid);
-diff --git a/MQTTPacket/src/MQTTSubscribe.h b/MQTTPacket/src/MQTTSubscribe.h
-index aa91826..64a0cfd 100644
---- a/MQTTPacket/src/MQTTSubscribe.h
-+++ b/MQTTPacket/src/MQTTSubscribe.h
-@@ -18,6 +18,8 @@
- #ifndef MQTTSUBSCRIBE_H_
- #define MQTTSUBSCRIBE_H_
- 
-+#include <inttypes.h>
-+
- #if !defined(DLLImport)
-   #define DLLImport 
- #endif
-@@ -26,14 +28,14 @@
- #endif
- 
- DLLExport int MQTTSerialize_subscribe(unsigned char* buf, int buflen, unsigned char dup, unsigned short packetid,
--		int count, MQTTString topicFilters[], int requestedQoSs[]);
-+		int count, MQTTString topicFilters[], uint8_t requestedQoSs[]);
- 
- DLLExport int MQTTDeserialize_subscribe(unsigned char* dup, unsigned short* packetid,
--		int maxcount, int* count, MQTTString topicFilters[], int requestedQoSs[], unsigned char* buf, int len);
-+		int maxcount, int* count, MQTTString topicFilters[], uint8_t requestedQoSs[], unsigned char* buf, int len);
- 
--DLLExport int MQTTSerialize_suback(unsigned char* buf, int buflen, unsigned short packetid, int count, int* grantedQoSs);
-+DLLExport int MQTTSerialize_suback(unsigned char* buf, int buflen, unsigned short packetid, int count, uint8_t* grantedQoSs);
- 
--DLLExport int MQTTDeserialize_suback(unsigned short* packetid, int maxcount, int* count, int grantedQoSs[], unsigned char* buf, int len);
-+DLLExport int MQTTDeserialize_suback(unsigned short* packetid, int maxcount, int* count, uint8_t grantedQoSs[], unsigned char* buf, int len);
- 
- 
- #endif /* MQTTSUBSCRIBE_H_ */
-diff --git a/MQTTPacket/src/MQTTSubscribeClient.c b/MQTTPacket/src/MQTTSubscribeClient.c
-index 57a0613..e7c1f83 100644
---- a/MQTTPacket/src/MQTTSubscribeClient.c
-+++ b/MQTTPacket/src/MQTTSubscribeClient.c
-@@ -48,7 +48,7 @@ int MQTTSerialize_subscribeLength(int count, MQTTString topicFilters[])
-   * @return the length of the serialized data.  <= 0 indicates error
-   */
- int MQTTSerialize_subscribe(unsigned char* buf, int buflen, unsigned char dup, unsigned short packetid, int count,
--		MQTTString topicFilters[], int requestedQoSs[])
-+		MQTTString topicFilters[], uint8_t requestedQoSs[])
- {
- 	unsigned char *ptr = buf;
- 	MQTTHeader header = {0};
-@@ -97,7 +97,7 @@ exit:
-   * @param buflen the length in bytes of the data in the supplied buffer
-   * @return error code.  1 is success, 0 is failure
-   */
--int MQTTDeserialize_suback(unsigned short* packetid, int maxcount, int* count, int grantedQoSs[], unsigned char* buf, int buflen)
-+int MQTTDeserialize_suback(unsigned short* packetid, int maxcount, int* count, uint8_t grantedQoSs[], unsigned char* buf, int buflen)
- {
- 	MQTTHeader header = {0};
- 	unsigned char* curdata = buf;
-diff --git a/MQTTPacket/src/MQTTSubscribeServer.c b/MQTTPacket/src/MQTTSubscribeServer.c
-index 5579645..fe2fe7b 100644
---- a/MQTTPacket/src/MQTTSubscribeServer.c
-+++ b/MQTTPacket/src/MQTTSubscribeServer.c
-@@ -33,7 +33,7 @@
-   * @return the length of the serialized data.  <= 0 indicates error
-   */
- int MQTTDeserialize_subscribe(unsigned char* dup, unsigned short* packetid, int maxcount, int* count, MQTTString topicFilters[],
--	int requestedQoSs[], unsigned char* buf, int buflen)
-+	uint8_t requestedQoSs[], unsigned char* buf, int buflen)
- {
- 	MQTTHeader header = {0};
- 	unsigned char* curdata = buf;
-@@ -79,7 +79,7 @@ exit:
-   * @param grantedQoSs - array of granted QoS
-   * @return the length of the serialized data.  <= 0 indicates error
-   */
--int MQTTSerialize_suback(unsigned char* buf, int buflen, unsigned short packetid, int count, int* grantedQoSs)
-+int MQTTSerialize_suback(unsigned char* buf, int buflen, unsigned short packetid, int count, uint8_t* grantedQoSs)
- {
- 	MQTTHeader header = {0};
- 	int rc = -1;
 -- 
 2.17.1
 
