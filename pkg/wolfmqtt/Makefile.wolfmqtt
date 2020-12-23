@@ -1,0 +1,17 @@
+MODULE = wolfmqtt
+
+SUBMODULES += 1
+
+#NO_AUTO_SRC = 1
+
+#-------------------------------------------------------------#
+# Default CRYPTO source files                                 #
+#-------------------------------------------------------------#
+#SRC +=  error.c \
+#        hash.c \
+#        logging.c \
+#        wc_encrypt.c \
+#        wc_port.c \
+#        wolfmath.c
+
+include $(RIOTBASE)/Makefile.base
