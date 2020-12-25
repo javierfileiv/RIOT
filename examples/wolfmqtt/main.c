@@ -295,12 +295,13 @@
 
 int main(void)
 {
-    // int rc;
+    int rc;
     MQTTCtx mqttCtx;
     (void) mqttCtx;
+    (void) rc;
 
     /* init defaults */
-    // mqtt_init_ctx(&mqttCtx);
+    rc = MqttClientNet_Init(&mqttCtx->net, mqttCtx);
     mqttCtx.app_name = "mqttclient";
     mqttCtx.message = DEFAULT_MESSAGE;
 

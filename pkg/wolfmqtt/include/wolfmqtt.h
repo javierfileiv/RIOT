@@ -1,6 +1,13 @@
 #define WOLFMQTT_USER_SETTINGS
-
-#include "wolfmqtt/mqtt_client.h"
+#define WOLFMQTT_CUSTOM_STRING
+#define WOLFMQTT_CUSTOM_MALLOC
+#define WOLFMQTT_V5
+// WOLFMQTT_CUSTOM_TYPES ??
+// WOLFMQTT_PACK  ??
+// WOLFMQTT_MULTITHREAD and WOLFMQTT_USER_THREADING
+// WOLFMQTT_USER_SETTINGS  and should call user_settings.h 
+#include "wolfmqtt/mqtt_client.h" 
+#include "user_settings.h"
 
 /* MQTT Client state */
 typedef enum _MQTTCtxState {
