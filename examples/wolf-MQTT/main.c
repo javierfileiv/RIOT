@@ -25,9 +25,7 @@
 #include "shell.h"
 #include "thread.h"
 #include "mutex.h"
-#include "wolfmqtt.h"
-#include "wolfmqtt/mqtt_client.h"
-
+#include "wolfmqtt_riot.h"
 
 #define BUF_SIZE                        1024
 #define MQTT_VERSION_v311               4       /* MQTT v3.1.1 version is 4 */
@@ -67,7 +65,7 @@
 #define IS_RETAINED_MSG                 0
 
 // static MQTTClient client;
-// static Network network;
+// static MqttNet network;
 // static int topic_cnt = 0;
 // static char _topic_to_subscribe[MAX_TOPICS][MAX_LEN_TOPIC];
 
@@ -292,7 +290,51 @@
 // static unsigned char buf[BUF_SIZE];
 // static unsigned char readbuf[BUF_SIZE];
 
+static int mqtt_message_cb(MqttClient *client, MqttMessage *msg,
+    byte msg_new, byte msg_done)
+{
+    (void)client;
+    (void)msg;
+    (void)msg_new;
+    (void)msg_done;
+    // MQTTCtx* mqttCtx = (MQTTCtx*)client->ctx;
+    // byte buf[PRINT_BUFFER_SIZE+1];
+    // word32 len;
 
+    // (void)mqttCtx;
+
+    // if (msg_new) {
+    //     /* Determine min size to dump */
+    //     len = msg->topic_name_len;
+    //     if (len > PRINT_BUFFER_SIZE) {
+    //         len = PRINT_BUFFER_SIZE;
+    //     }
+    //     XMEMCPY(buf, msg->topic_name, len);
+    //     buf[len] = '\0'; /* Make sure its null terminated */
+
+    //     /* Print incoming message */
+    //     PRINTF("MQTT Message: Topic %s, Qos %d, Len %u",
+    //         buf, msg->qos, msg->total_len);
+    // }
+
+    // /* Print message payload */
+    // len = msg->buffer_len;
+    // if (len > PRINT_BUFFER_SIZE) {
+    //     len = PRINT_BUFFER_SIZE;
+    // }
+    // XMEMCPY(buf, msg->buffer, len);
+    // buf[len] = '\0'; /* Make sure its null terminated */
+    // PRINTF("Payload (%d - %d): %s",
+    //     msg->buffer_pos, msg->buffer_pos + len, buf);
+
+    // if (msg_done) {
+    //     PRINTF("MQTT Message: Done");
+    // }
+
+    /* Return negative to terminate publish processing */
+    return MQTT_CODE_SUCCESS;
+}
+#define MAX_BUFFER_SIZE 1024
 int main(void)
 {
     int rc;
@@ -301,7 +343,12 @@ int main(void)
     (void) rc;
 
     /* init defaults */
-    rc = MqttClientNet_Init(&mqttCtx->net, mqttCtx);
+    rc = MqttClientNet_Init(&mqttCtx.net, &mqttCtx);
+
+    rc = MqttClient_Init(&mqttCtx.client, &mqttCtx.net, mqtt_message_cb,
+                mqttCtx.tx_buf, MAX_BUFFER_SIZE,    mqttCtx.rx_buf, MAX_BUFFER_SIZE,
+                mqttCtx.cmd_timeout_ms);
+
     mqttCtx.app_name = "mqttclient";
     mqttCtx.message = DEFAULT_MESSAGE;
 

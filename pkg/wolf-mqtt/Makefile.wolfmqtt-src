@@ -1,0 +1,14 @@
+MODULE = wolf-mqtt-src
+
+NO_AUTO_SRC = 1
+
+#-------------------------------------------------------------#
+# Default wolf MQTT source files                                 #
+#-------------------------------------------------------------#
+SRC =  \
+    mqtt_client.c \
+    mqtt_packet.c \
+    mqtt_socket.c \
+    #
+
+include $(RIOTBASE)/Makefile.base

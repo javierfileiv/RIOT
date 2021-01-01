@@ -1,13 +1,40 @@
-#define WOLFMQTT_USER_SETTINGS
-#define WOLFMQTT_CUSTOM_STRING
-#define WOLFMQTT_CUSTOM_MALLOC
-#define WOLFMQTT_V5
-// WOLFMQTT_CUSTOM_TYPES ??
-// WOLFMQTT_PACK  ??
-// WOLFMQTT_MULTITHREAD and WOLFMQTT_USER_THREADING
-// WOLFMQTT_USER_SETTINGS  and should call user_settings.h 
-#include "wolfmqtt/mqtt_client.h" 
+/*
+ * Copyright (C) 2021 Javier FILEIV <javier.fileiv@gmail.com>
+ *
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
+ */
+
+/**
+ * @ingroup      pkg_wolf_mqtt
+ * @ingroup      config
+ * @defgroup     
+ *
+ * @brief        WolfMQTT config header. Replaces the one created by GNU autoconf tool.
+ *               
+ * @{
+ *
+ * @file
+ * @brief       WolfMQTT user settings
+ *
+ * @author      Javier FILEIV <javier.fileiv@gmail.com>
+ */
+
+#ifdef MODULE_IPV6_ADDR
+#include "net/ipv6/addr.h"
+#endif
+#ifdef MODULE_IPV4_ADDR
+#include "net/ipv4/addr.h"
+#endif
+#include "net/sock/tcp.h"
+
 #include "user_settings.h"
+#include "wolfmqtt/mqtt_client.h" 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* MQTT Client state */
 typedef enum _MQTTCtxState {
@@ -25,17 +52,22 @@ typedef enum _MQTTCtxState {
     WMQ_DONE
 } MQTTCtxState;
 
+/* MQTT Socket context */
+typedef struct _SocketContext {
+    sock_tcp_t sock;                /**< socket number */
+} SocketContext;
+
 /* MQTT Client context */
 /* This is used for the examples as reference */
 /* Use of this structure allow non-blocking context */
 typedef struct _MQTTCtx {
+
     MQTTCtxState stat;
-
-    void* app_ctx; /* For storing application specific data */
-
+    
     /* client and net containers */
     MqttClient client;
     MqttNet net;
+    SocketContext sock;
 
     /* temp mqtt containers */
     MqttConnect connect;
@@ -91,3 +123,18 @@ typedef struct _MQTTCtx {
         network callbacks can return MQTT_CODE_CONTINUE to indicate "would block" */
 #endif
 } MQTTCtx;
+
+/* Functions used to handle the MqttNet structure creation / destruction */
+int MqttClientNet_Init(MqttNet* net, MQTTCtx* mqttCtx);
+int MqttClientNet_DeInit(MqttNet* net);
+
+#ifdef WOLFMQTT_SN
+int SN_ClientNet_Init(MqttNet* net, MQTTCtx* mqttCtx);
+#endif
+
+int MqttClientNet_Wake(MqttNet* net);
+
+#ifdef __cplusplus
+}
+#endif
+/** @} */ 

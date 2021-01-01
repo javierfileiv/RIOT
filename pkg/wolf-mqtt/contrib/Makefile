@@ -1,3 +1,3 @@
-MODULE = paho-mqtt-contrib
+MODULE = wolf-mqtt-contrib
 
 include $(RIOTBASE)/Makefile.base

@@ -1,0 +1,6 @@
+INCLUDES += -I$(RIOTBASE)/pkg/wolf-mqtt/include
+
+DIRS += $(RIOTBASE)/pkg/wolf-mqtt/contrib
+
+#use Wolf MQTT with user settinga
+CFLAGS += -DWOLFMQTT_USER_SETTINGS=1
